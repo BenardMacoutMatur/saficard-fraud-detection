@@ -7,7 +7,6 @@ from datetime import datetime
 
 st.set_page_config(
     page_title="FraudGuard",
-    page_icon="🛡️",
     layout="centered"
 )
 
@@ -114,7 +113,7 @@ def load_artifacts():
 try:
     model, encoders, feature_names, threshold = load_artifacts()
 except Exception as e:
-    st.error(f"❌ Could not load model files: {e}")
+    st.error(f"Could not load model files: {e}")
     st.info("Make sure fraud_model.pkl, label_encoders.pkl, feature_names.pkl and threshold.pkl are in the same folder as app.py")
     st.stop()
 
@@ -139,23 +138,11 @@ MERCHANTS = {
     "Nairobi Cinema":       ("entertainment", "fraud_Crona and Sons"),
 }
 
-ICONS = {
-    "Naivas Supermarket": "🛒", "Quickmart": "🛒",
-    "Carrefour Kenya": "🏪",   "Jumia Kenya": "📦",
-    "Netflix": "🎬",            "Showmax": "📺",
-    "Java House": "☕",         "KFC Kenya": "🍗",
-    "Glovo Kenya": "🛵",        "Uber Kenya": "🚗",
-    "KPLC Prepaid": "💡",       "Total Energies": "⛽",
-    "Goodlife Pharmacy": "💊",  "SGR Madaraka Express": "🚂",
-    "Nairobi Cinema": "🎭",
-}
-
 # ─────────────────────────────────────────
 # DEFAULTS for all hidden fields
 # ─────────────────────────────────────────
 DEFAULT_AGE        = 35
 DEFAULT_GENDER     = "M"
-DEFAULT_OCCUPATION = "Accountant"
 DEFAULT_CITY       = "Columbia"
 DEFAULT_STATE      = "NY"
 DEFAULT_DISTANCE   = 5.0
@@ -197,7 +184,7 @@ def run_fraud_check(merchant, amount_kes, hour_override=None):
     df_in    = pd.DataFrame([row])[feature_names]
     prob     = float(model.predict_proba(df_in)[0][1])
     is_fraud = prob >= threshold
-    return prob, is_fraud, cat_raw
+    return prob, is_fraud, cat_raw, use_hour
 
 def fraud_reasons(merchant, amount_kes, hour):
     reasons = []
@@ -235,7 +222,7 @@ def render_risk_bar(prob):
 # ─────────────────────────────────────────
 st.markdown("""
     <div class="fg-header">
-        <h1>🛡️ FraudGuard</h1>
+        <h1>FraudGuard</h1>
         <p>Real-time credit card fraud detection · XGBoost · BSc Data Science · JKUAT</p>
     </div>
 """, unsafe_allow_html=True)
@@ -243,7 +230,7 @@ st.markdown("""
 # ─────────────────────────────────────────
 # TABS
 # ─────────────────────────────────────────
-tab_check, tab_history = st.tabs(["🔍 Check Transaction", "📋 History"])
+tab_check, tab_history = st.tabs(["Check Transaction", "History"])
 
 # ══════════════════════════════════════════
 # TAB 1 — CHECK TRANSACTION
@@ -252,28 +239,23 @@ with tab_check:
 
     if st.session_state.result:
         r    = st.session_state.result
-        icon = ICONS.get(r['merchant'], '💳')
         hour = r['hour']
 
         if not r['is_fraud']:
             st.markdown(f"""
                 <div class="card-safe">
-                    <div style="font-size:40px">✅</div>
                     <h2>Transaction Approved</h2>
                     <div style="font-size:15px;color:#374151;">
-                        {icon} <b>{r['merchant']}</b> &nbsp;·&nbsp;
-                        KES {r['amount']:,.2f}
+                        <b>{r['merchant']}</b> &nbsp;·&nbsp; KES {r['amount']:,.2f}
                     </div>
                 </div>
             """, unsafe_allow_html=True)
         else:
             st.markdown(f"""
                 <div class="card-fraud">
-                    <div style="font-size:40px">🚨</div>
                     <h2>Transaction Blocked</h2>
                     <div style="font-size:15px;color:#374151;">
-                        {icon} <b>{r['merchant']}</b> &nbsp;·&nbsp;
-                        KES {r['amount']:,.2f}
+                        <b>{r['merchant']}</b> &nbsp;·&nbsp; KES {r['amount']:,.2f}
                     </div>
                     <div style="font-size:13px;color:#b91c1c;margin-top:6px;">
                         No amount was deducted from your account.
@@ -286,13 +268,13 @@ with tab_check:
                 st.markdown("**Why was this flagged?**")
                 for reason in reasons:
                     st.markdown(
-                        f'<span class="reason-tag">⚠️ {reason}</span>',
+                        f'<span class="reason-tag">{reason}</span>',
                         unsafe_allow_html=True
                     )
 
         render_risk_bar(r['prob'])
 
-        if st.button("🔄 Check Another Transaction"):
+        if st.button("Check Another Transaction"):
             st.session_state.result = None
             st.rerun()
 
@@ -301,11 +283,7 @@ with tab_check:
 
         col1, col2 = st.columns(2)
         with col1:
-            merchant = st.selectbox(
-                "Merchant",
-                [f"{ICONS.get(m,'💳')} {m}" for m in MERCHANTS]
-            )
-            merchant = merchant.split(" ", 1)[1]
+            merchant = st.selectbox("Merchant", list(MERCHANTS))
 
         with col2:
             amount = st.number_input(
@@ -313,17 +291,16 @@ with tab_check:
                 max_value=500000.0, value=1500.0, step=100.0
             )
 
-        with st.expander("🎯 Demo Controls (presentation use only)"):
+        with st.expander("Demo Controls (presentation use only)"):
             demo_on  = st.checkbox("Override transaction hour")
             sim_hour = st.slider("Hour of day", 0, 23, 23, disabled=not demo_on)
 
         st.markdown("---")
 
-        if st.button("🔍 Check for Fraud", use_container_width=True):
+        if st.button("Check for Fraud", use_container_width=True):
             with st.spinner("Analysing transaction..."):
                 hour_val = sim_hour if demo_on else None
-                prob, is_fraud, cat = run_fraud_check(merchant, amount, hour_val)
-                use_hour = sim_hour if demo_on else random.randint(0, 23)
+                prob, is_fraud, cat, use_hour = run_fraud_check(merchant, amount, hour_val)
 
             result = {
                 'merchant':  merchant,
@@ -359,31 +336,26 @@ with tab_history:
 
         c1, c2, c3 = st.columns(3)
         c1.metric("Total Checked", total)
-        c2.metric("✅ Approved",   safe)
-        c3.metric("🚨 Blocked",    blocked)
+        c2.metric("Approved",      safe)
+        c3.metric("Blocked",       blocked)
 
         st.markdown("---")
 
         for r in st.session_state.history:
-            icon  = ICONS.get(r['merchant'], '💳')
             css   = "hist-row blocked" if r['is_fraud'] else "hist-row"
-            badge = "🚨 Blocked" if r['is_fraud'] else "✅ Approved"
+            badge = "Blocked" if r['is_fraud'] else "Approved"
             st.markdown(f"""
                 <div class="{css}">
                     <div style="display:flex;justify-content:space-between;">
-                        <span>{icon} <b>{r['merchant']}</b>
-                              &nbsp;·&nbsp; {badge}</span>
-                        <span style="font-weight:600;">
-                            KES {r['amount']:,.2f}
-                        </span>
+                        <span><b>{r['merchant']}</b> &nbsp;·&nbsp; {badge}</span>
+                        <span style="font-weight:600;">KES {r['amount']:,.2f}</span>
                     </div>
                     <div style="color:#64748b;margin-top:3px;">
-                        Risk: {r['prob']*100:.1f}% &nbsp;·&nbsp;
-                        {r['timestamp']}
+                        Risk: {r['prob']*100:.1f}% &nbsp;·&nbsp; {r['timestamp']}
                     </div>
                 </div>
             """, unsafe_allow_html=True)
 
-        if st.button("🗑️ Clear History"):
+        if st.button("Clear History"):
             st.session_state.history = []
             st.rerun()
