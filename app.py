@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
-import random
 from datetime import datetime
 
 st.set_page_config(
@@ -162,7 +161,7 @@ def run_fraud_check(merchant, amount_kes, hour_override=None):
     now        = datetime.now()
     cat_raw, merch_raw = MERCHANTS[merchant]
     job_raw    = "Chartered accountant"
-    use_hour   = hour_override if hour_override is not None else random.randint(0, 23)
+    use_hour   = hour_override if hour_override is not None else now.hour
     amount_usd = float(amount_kes) / 130
 
     row = {
@@ -193,8 +192,6 @@ def fraud_reasons(merchant, amount_kes, hour):
         reasons.append("Unusually high transaction amount")
     if cat in ('shopping_net', 'misc_net', 'grocery_net'):
         reasons.append("High-risk online merchant category")
-    if hour >= 22 or hour <= 3:
-        reasons.append("Transaction during high-risk hours (10 PM – 4 AM)")
     return reasons
 
 # ─────────────────────────────────────────
