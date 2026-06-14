@@ -2,20 +2,15 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
+import random
 from datetime import datetime
 
-# ─────────────────────────────────────────
-# PAGE CONFIG
-# ─────────────────────────────────────────
 st.set_page_config(
     page_title="FraudGuard",
     page_icon="🛡️",
     layout="centered"
 )
 
-# ─────────────────────────────────────────
-# STYLING
-# ─────────────────────────────────────────
 st.markdown("""
 <style>
 [data-testid="stHeader"]        { display: none !important; }
@@ -59,11 +54,7 @@ st.markdown("""
     margin: 10px 0 4px 0;
     overflow: hidden;
 }
-.risk-fill {
-    height: 10px;
-    border-radius: 99px;
-    transition: width 0.4s ease;
-}
+.risk-fill { height: 10px; border-radius: 99px; transition: width 0.4s ease; }
 
 .fg-label {
     font-size: 11px;
@@ -148,28 +139,6 @@ MERCHANTS = {
     "Nairobi Cinema":       ("entertainment", "fraud_Crona and Sons"),
 }
 
-COUNTIES = {
-    "Nairobi":  ("Columbia",   "NY"),
-    "Mombasa":  ("Tampa",      "FL"),
-    "Kisumu":   ("Houston",    "TX"),
-    "Nakuru":   ("Sacramento", "CA"),
-    "Eldoret":  ("Portland",   "WA"),
-    "Thika":    ("Joliet",     "IL"),
-    "Nyeri":    ("Cleveland",  "OH"),
-    "Machakos": ("Omaha",      "NE"),
-}
-
-OCCUPATIONS = {
-    "Software Developer": "Applications developer",
-    "Civil Engineer":     "Civil engineer, contracting",
-    "Accountant":         "Chartered accountant",
-    "Teacher":            "Secondary school teacher",
-    "Doctor":             "Doctor, general practice",
-    "Nurse":              "Mental health nurse",
-    "Business Manager":   "Call centre manager",
-    "Farmer":             "Agricultural consultant",
-}
-
 ICONS = {
     "Naivas Supermarket": "🛒", "Quickmart": "🛒",
     "Carrefour Kenya": "🏪",   "Jumia Kenya": "📦",
@@ -181,19 +150,15 @@ ICONS = {
     "Nairobi Cinema": "🎭",
 }
 
-COUNTY_DISTANCES = {
-    "Nairobi": 3.0, "Mombasa": 8.0, "Kisumu": 5.0, "Nakuru": 12.0,
-    "Eldoret": 15.0, "Thika": 6.0, "Nyeri": 20.0, "Machakos": 10.0,
-}
-
 # ─────────────────────────────────────────
-# DEFAULTS for hidden fields
-# Age 35 (population median), gender M (majority in dataset),
-# occupation "Accountant" (white-collar middle-income default)
+# DEFAULTS for all hidden fields
 # ─────────────────────────────────────────
 DEFAULT_AGE        = 35
 DEFAULT_GENDER     = "M"
 DEFAULT_OCCUPATION = "Accountant"
+DEFAULT_CITY       = "Columbia"
+DEFAULT_STATE      = "NY"
+DEFAULT_DISTANCE   = 5.0
 
 # ─────────────────────────────────────────
 # SESSION STATE
@@ -206,29 +171,27 @@ if 'result' not in st.session_state:
 # ─────────────────────────────────────────
 # FRAUD CHECK
 # ─────────────────────────────────────────
-def run_fraud_check(merchant, amount_kes, county, hour_override=None):
-    now          = datetime.now()
+def run_fraud_check(merchant, amount_kes, hour_override=None):
+    now        = datetime.now()
     cat_raw, merch_raw = MERCHANTS[merchant]
-    city_raw, state_raw = COUNTIES[county]
-    job_raw      = OCCUPATIONS[DEFAULT_OCCUPATION]
-    use_hour     = hour_override if hour_override is not None else now.hour
-    distance     = COUNTY_DISTANCES.get(county, 5.0)
-    amount_usd   = float(amount_kes) / 130
+    job_raw    = "Chartered accountant"
+    use_hour   = hour_override if hour_override is not None else random.randint(0, 23)
+    amount_usd = float(amount_kes) / 130
 
     row = {
         'merchant':    encoders['merchant'].transform([merch_raw])[0],
         'category':    encoders['category'].transform([cat_raw])[0],
         'amt':         amount_usd,
         'gender':      encoders['gender'].transform([DEFAULT_GENDER])[0],
-        'city':        encoders['city'].transform([city_raw])[0],
-        'state':       encoders['state'].transform([state_raw])[0],
+        'city':        encoders['city'].transform([DEFAULT_CITY])[0],
+        'state':       encoders['state'].transform([DEFAULT_STATE])[0],
         'job':         encoders['job'].transform([job_raw])[0],
         'hour':        use_hour,
         'day':         now.day,
         'month':       now.month,
         'dayofweek':   now.weekday(),
         'age':         DEFAULT_AGE,
-        'distance_km': distance,
+        'distance_km': DEFAULT_DISTANCE,
     }
 
     df_in    = pd.DataFrame([row])[feature_names]
@@ -257,8 +220,7 @@ def render_risk_bar(prob):
     st.markdown(f"""
         <div class="fg-label">Fraud Risk — {label} ({pct}%)</div>
         <div class="risk-track">
-            <div class="risk-fill"
-                 style="width:{pct}%; background:{color};"></div>
+            <div class="risk-fill" style="width:{pct}%; background:{color};"></div>
         </div>
         <div style="display:flex;justify-content:space-between;
                     font-size:11px;color:#94a3b8;margin-bottom:12px;">
@@ -345,28 +307,23 @@ with tab_check:
             )
             merchant = merchant.split(" ", 1)[1]
 
+        with col2:
             amount = st.number_input(
                 "Amount (KES)", min_value=1.0,
                 max_value=500000.0, value=1500.0, step=100.0
             )
 
-        with col2:
-            county = st.selectbox("County", list(COUNTIES))
-
         with st.expander("🎯 Demo Controls (presentation use only)"):
             demo_on  = st.checkbox("Override transaction hour")
-            sim_hour = st.slider("Hour of day", 0, 23, 23,
-                                  disabled=not demo_on)
+            sim_hour = st.slider("Hour of day", 0, 23, 23, disabled=not demo_on)
 
         st.markdown("---")
 
         if st.button("🔍 Check for Fraud", use_container_width=True):
             with st.spinner("Analysing transaction..."):
                 hour_val = sim_hour if demo_on else None
-                prob, is_fraud, cat = run_fraud_check(
-                    merchant, amount, county, hour_val
-                )
-                use_hour = sim_hour if demo_on else datetime.now().hour
+                prob, is_fraud, cat = run_fraud_check(merchant, amount, hour_val)
+                use_hour = sim_hour if demo_on else random.randint(0, 23)
 
             result = {
                 'merchant':  merchant,
