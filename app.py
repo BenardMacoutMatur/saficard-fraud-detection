@@ -31,7 +31,13 @@ st.set_page_config(
 st.markdown("""
     <style>
     /* General */
-    .block-container { padding-top: 1rem; padding-bottom: 1rem; }
+   .block-container { 
+    padding-top: 0rem !important; 
+    padding-bottom: 1rem; 
+    max-width: 800px;
+}
+[data-testid="stAppViewContainer"] { padding-top: 0rem !important; }
+[data-testid="stHeader"] { display: none !important; }
 
     /* Header */
     .safi-header {
