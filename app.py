@@ -23,7 +23,6 @@ st.markdown("""
 .block-container { padding-top: 1rem; max-width: 720px; }
 #MainMenu, footer               { visibility: hidden; }
 
-/* Top bar */
 .fg-header {
     background: linear-gradient(135deg, #0f172a, #1e3a5f);
     border-radius: 12px;
@@ -34,7 +33,6 @@ st.markdown("""
 .fg-header h1  { font-size: 22px; margin: 0; letter-spacing: 1px; }
 .fg-header p   { font-size: 12px; margin: 4px 0 0 0; opacity: 0.6; }
 
-/* Result cards */
 .card-safe {
     background: #f0fdf4;
     border: 1.5px solid #16a34a;
@@ -54,7 +52,6 @@ st.markdown("""
 .card-safe  h2 { color: #15803d; margin: 8px 0 4px 0; }
 .card-fraud h2 { color: #b91c1c; margin: 8px 0 4px 0; }
 
-/* Risk bar */
 .risk-track {
     background: #e5e7eb;
     border-radius: 99px;
@@ -68,7 +65,6 @@ st.markdown("""
     transition: width 0.4s ease;
 }
 
-/* Small label */
 .fg-label {
     font-size: 11px;
     font-weight: 600;
@@ -78,7 +74,6 @@ st.markdown("""
     margin-bottom: 4px;
 }
 
-/* Reason tag */
 .reason-tag {
     background: #fff1f2;
     border: 1px solid #fecaca;
@@ -90,7 +85,6 @@ st.markdown("""
     display: block;
 }
 
-/* History row */
 .hist-row {
     background: white;
     border: 1px solid #e5e7eb;
@@ -102,7 +96,6 @@ st.markdown("""
 }
 .hist-row.blocked { border-left-color: #dc2626; }
 
-/* Subtle buttons */
 .stButton > button {
     background: #0f172a;
     color: white;
@@ -135,7 +128,7 @@ except Exception as e:
     st.stop()
 
 # ─────────────────────────────────────────
-# MAPPINGS  (extend freely)
+# MAPPINGS
 # ─────────────────────────────────────────
 MERCHANTS = {
     "Naivas Supermarket":   ("grocery_pos",   "fraud_Connelly-Carter"),
@@ -194,22 +187,30 @@ COUNTY_DISTANCES = {
 }
 
 # ─────────────────────────────────────────
+# DEFAULTS for hidden fields
+# Age 35 (population median), gender M (majority in dataset),
+# occupation "Accountant" (white-collar middle-income default)
+# ─────────────────────────────────────────
+DEFAULT_AGE        = 35
+DEFAULT_GENDER     = "M"
+DEFAULT_OCCUPATION = "Accountant"
+
+# ─────────────────────────────────────────
 # SESSION STATE
 # ─────────────────────────────────────────
 if 'history' not in st.session_state:
-    st.session_state.history = []   # list of result dicts
+    st.session_state.history = []
 if 'result' not in st.session_state:
     st.session_state.result = None
 
 # ─────────────────────────────────────────
 # FRAUD CHECK
 # ─────────────────────────────────────────
-def run_fraud_check(merchant, amount_kes, age, gender, occupation,
-                    county, hour_override=None):
+def run_fraud_check(merchant, amount_kes, county, hour_override=None):
     now          = datetime.now()
     cat_raw, merch_raw = MERCHANTS[merchant]
     city_raw, state_raw = COUNTIES[county]
-    job_raw      = OCCUPATIONS[occupation]
+    job_raw      = OCCUPATIONS[DEFAULT_OCCUPATION]
     use_hour     = hour_override if hour_override is not None else now.hour
     distance     = COUNTY_DISTANCES.get(county, 5.0)
     amount_usd   = float(amount_kes) / 130
@@ -218,7 +219,7 @@ def run_fraud_check(merchant, amount_kes, age, gender, occupation,
         'merchant':    encoders['merchant'].transform([merch_raw])[0],
         'category':    encoders['category'].transform([cat_raw])[0],
         'amt':         amount_usd,
-        'gender':      encoders['gender'].transform([gender])[0],
+        'gender':      encoders['gender'].transform([DEFAULT_GENDER])[0],
         'city':        encoders['city'].transform([city_raw])[0],
         'state':       encoders['state'].transform([state_raw])[0],
         'job':         encoders['job'].transform([job_raw])[0],
@@ -226,7 +227,7 @@ def run_fraud_check(merchant, amount_kes, age, gender, occupation,
         'day':         now.day,
         'month':       now.month,
         'dayofweek':   now.weekday(),
-        'age':         int(age),
+        'age':         DEFAULT_AGE,
         'distance_km': distance,
     }
 
@@ -247,7 +248,7 @@ def fraud_reasons(merchant, amount_kes, hour):
     return reasons
 
 # ─────────────────────────────────────────
-# RISK BAR HELPER
+# RISK BAR
 # ─────────────────────────────────────────
 def render_risk_bar(prob):
     pct   = int(prob * 100)
@@ -287,11 +288,10 @@ tab_check, tab_history = st.tabs(["🔍 Check Transaction", "📋 History"])
 # ══════════════════════════════════════════
 with tab_check:
 
-    # Show result if available
     if st.session_state.result:
-        r     = st.session_state.result
-        icon  = ICONS.get(r['merchant'], '💳')
-        hour  = r['hour']
+        r    = st.session_state.result
+        icon = ICONS.get(r['merchant'], '💳')
+        hour = r['hour']
 
         if not r['is_fraud']:
             st.markdown(f"""
@@ -334,7 +334,6 @@ with tab_check:
             st.session_state.result = None
             st.rerun()
 
-    # ── INPUT FORM ──────────────────────────
     else:
         st.markdown("#### Transaction Details")
 
@@ -344,7 +343,7 @@ with tab_check:
                 "Merchant",
                 [f"{ICONS.get(m,'💳')} {m}" for m in MERCHANTS]
             )
-            merchant = merchant.split(" ", 1)[1]  # strip icon
+            merchant = merchant.split(" ", 1)[1]
 
             amount = st.number_input(
                 "Amount (KES)", min_value=1.0,
@@ -352,16 +351,8 @@ with tab_check:
             )
 
         with col2:
-            county     = st.selectbox("County", list(COUNTIES))
-            occupation = st.selectbox("Occupation", list(OCCUPATIONS))
+            county = st.selectbox("County", list(COUNTIES))
 
-        col3, col4 = st.columns(2)
-        with col3:
-            age    = st.number_input("Age", min_value=18, max_value=100, value=30)
-        with col4:
-            gender = st.selectbox("Gender", ["M", "F"])
-
-        # Demo controls (collapsed by default)
         with st.expander("🎯 Demo Controls (presentation use only)"):
             demo_on  = st.checkbox("Override transaction hour")
             sim_hour = st.slider("Hour of day", 0, 23, 23,
@@ -373,8 +364,7 @@ with tab_check:
             with st.spinner("Analysing transaction..."):
                 hour_val = sim_hour if demo_on else None
                 prob, is_fraud, cat = run_fraud_check(
-                    merchant, amount, age, gender,
-                    occupation, county, hour_val
+                    merchant, amount, county, hour_val
                 )
                 use_hour = sim_hour if demo_on else datetime.now().hour
 
@@ -391,7 +381,6 @@ with tab_check:
             st.session_state.history.insert(0, result)
             st.rerun()
 
-        # Model info footer
         st.markdown(
             f"<div style='text-align:center;font-size:11px;color:#94a3b8;"
             f"margin-top:16px;'>Model: XGBoost · "
