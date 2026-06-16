@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import numpy as np
 import joblib
@@ -11,10 +12,10 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-[data-testid="stHeader"]        { display: none !important; }
+[data-testid="stHeader"]           { display: none !important; }
 [data-testid="stAppViewContainer"] { padding-top: 0 !important; }
 .block-container { padding-top: 1rem; max-width: 720px; }
-#MainMenu, footer               { visibility: hidden; }
+#MainMenu, footer { visibility: hidden; }
 
 .fg-header {
     background: linear-gradient(135deg, #0f172a, #1e3a5f);
@@ -23,8 +24,8 @@ st.markdown("""
     color: white;
     margin-bottom: 24px;
 }
-.fg-header h1  { font-size: 22px; margin: 0; letter-spacing: 1px; }
-.fg-header p   { font-size: 12px; margin: 4px 0 0 0; opacity: 0.6; }
+.fg-header h1 { font-size: 22px; margin: 0; letter-spacing: 1px; }
+.fg-header p  { font-size: 12px; margin: 4px 0 0 0; opacity: 0.6; }
 
 .card-safe {
     background: #f0fdf4;
@@ -99,6 +100,171 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────
+# ONBOARDING HTML
+# ─────────────────────────────────────────
+ONBOARDING_HTML = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem 1rem;min-height:100vh}
+.phone-wrap{background:#e2e8f0;border-radius:16px;padding:1.25rem;display:flex;justify-content:center;margin-bottom:1rem}
+.phone{width:288px;background:#fff;border-radius:24px;border:1px solid #cbd5e1;overflow:hidden}
+.phone-bar{background:#0f172a;padding:10px 16px;display:flex;align-items:center;gap:8px}
+.phone-bar-dot{width:6px;height:6px;border-radius:50%;background:#94a3b8;opacity:.5}
+.phone-bar-title{color:#e2e8f0;font-size:13px;font-weight:500;letter-spacing:.5px}
+.phone-body{padding:18px 14px;min-height:410px;display:flex;flex-direction:column}
+.step-pill{display:flex;gap:4px;margin-bottom:14px;justify-content:center}
+.step-pip{width:20px;height:4px;border-radius:2px;background:#e2e8f0;transition:background .3s}
+.step-pip.done{background:#0f172a}
+.step-pip.active{background:#378ADD}
+.ob-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:21px;margin:0 auto 10px}
+.ob-title{font-size:15px;font-weight:500;color:#0f172a;text-align:center;margin-bottom:5px}
+.ob-sub{font-size:12px;color:#64748b;text-align:center;line-height:1.6;margin-bottom:14px}
+.ob-card{background:#f8fafc;border-radius:8px;padding:9px 11px;margin-bottom:7px;display:flex;align-items:center;gap:9px;border:1px solid #e2e8f0}
+.ob-card-icon{font-size:15px;color:#64748b}
+.ob-card-text{font-size:12px;color:#0f172a;line-height:1.4}
+.ob-card-sub{font-size:11px;color:#64748b}
+input.ob-input{width:100%;padding:7px 9px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;font-size:12px;color:#0f172a;font-family:inherit;margin-bottom:7px}
+input.ob-input:focus{outline:none;border-color:#378ADD}
+.tag-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.tag{padding:4px 9px;border-radius:20px;font-size:11px;border:1px solid #cbd5e1;cursor:pointer;color:#64748b;background:#fff;transition:all .2s}
+.tag.sel{background:#E6F1FB;color:#0C447C;border-color:#85B7EB}
+.ob-btn{width:100%;padding:9px;border-radius:8px;border:none;background:#0f172a;color:#f8fafc;font-size:12px;font-weight:500;cursor:pointer;margin-top:auto;font-family:inherit}
+.ob-btn:hover{background:#1e3a5f}
+.ob-btn.sec{background:transparent;color:#64748b;border:1px solid #cbd5e1;margin-top:5px}
+.ob-btn.sec:hover{background:#f8fafc}
+.check-row{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid #f1f5f9}
+.check-row:last-child{border-bottom:none}
+.check-circle{width:18px;height:18px;border-radius:50%;border:1px solid #cbd5e1;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+.check-circle.done{background:#EAF3DE;border-color:#639922;color:#3B6D11}
+.nav-row{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:316px}
+.nav-label{font-size:11px;color:#64748b}
+.nav-btns{display:flex;gap:5px}
+.nav-b{background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:11px;color:#0f172a;font-family:inherit}
+.nav-b:hover{background:#f8fafc}
+.nav-b:disabled{opacity:.35;cursor:default}
+</style>
+</head>
+<body>
+<div class="phone-wrap">
+  <div class="phone">
+    <div class="phone-bar">
+      <div class="phone-bar-dot"></div>
+      <div class="phone-bar-title">FraudGuard</div>
+    </div>
+    <div class="phone-body" id="phone-body"></div>
+  </div>
+</div>
+<div class="nav-row">
+  <span class="nav-label" id="nav-label">Step 1 of 5</span>
+  <div class="nav-btns">
+    <button class="nav-b" id="prev-b" onclick="go(-1)" disabled>← Back</button>
+    <button class="nav-b" id="next-b" onclick="go(1)">Next →</button>
+  </div>
+</div>
+<script>
+const STEPS=[
+  {render:()=>`
+    <div class="step-pill">${pips(0)}</div>
+    <div class="ob-icon" style="background:#E6F1FB"><i class="ti ti-shield-check" style="font-size:21px;color:#185FA5"></i></div>
+    <div class="ob-title">Welcome to FraudGuard</div>
+    <div class="ob-sub">Real-time credit card fraud detection powered by machine learning. Let's set you up in under a minute.</div>
+    <div class="ob-card"><i class="ti ti-bolt ob-card-icon"></i><div><div class="ob-card-text">Instant scoring</div><div class="ob-card-sub">Each transaction scored in &lt;1 second</div></div></div>
+    <div class="ob-card"><i class="ti ti-chart-bar ob-card-icon"></i><div><div class="ob-card-text">XGBoost + SVM hybrid model</div><div class="ob-card-sub">97% AUC-ROC · 91% F1 score</div></div></div>
+    <div class="ob-card"><i class="ti ti-history ob-card-icon"></i><div><div class="ob-card-text">Full transaction history</div><div class="ob-card-sub">Track approvals and blocks over time</div></div></div>
+    <button class="ob-btn" onclick="go(1)">Get started</button>
+  `},
+  {render:()=>`
+    <div class="step-pill">${pips(1)}</div>
+    <div class="ob-icon" style="background:#EAF3DE"><i class="ti ti-user" style="font-size:21px;color:#3B6D11"></i></div>
+    <div class="ob-title">Your profile</div>
+    <div class="ob-sub">This helps us personalise your fraud risk baseline.</div>
+    <input class="ob-input" placeholder="Full name" value="Levi Omondi"/>
+    <input class="ob-input" placeholder="Email address" value="levi@example.com"/>
+    <input class="ob-input" placeholder="Phone number" value="+254 712 345 678"/>
+    <div style="font-size:10px;color:#64748b;margin-bottom:10px">Your data is used only for fraud scoring and is never sold.</div>
+    <button class="ob-btn" onclick="go(1)">Continue</button>
+    <button class="ob-btn sec" onclick="go(1)">Skip for now</button>
+  `},
+  {render:()=>`
+    <div class="step-pill">${pips(2)}</div>
+    <div class="ob-icon" style="background:#FAEEDA"><i class="ti ti-building-store" style="font-size:21px;color:#854F0B"></i></div>
+    <div class="ob-title">Your usual merchants</div>
+    <div class="ob-sub">Select where you shop regularly to reduce false positives.</div>
+    <div class="tag-row">
+      ${['Naivas Supermarket','Quickmart','Java House','KFC Kenya','Jumia Kenya','Netflix','Uber Kenya','KPLC Prepaid','Carrefour Kenya','Glovo Kenya']
+        .map((m,i)=>`<span class="tag${[0,1,3,5,6].includes(i)?' sel':''}" onclick="this.classList.toggle('sel')">${m}</span>`).join('')}
+    </div>
+    <div style="font-size:10px;color:#64748b;margin-bottom:10px">Trusted merchants are weighted lower in the risk model.</div>
+    <button class="ob-btn" onclick="go(1)">Save merchants</button>
+  `},
+  {render:()=>`
+    <div class="step-pill">${pips(3)}</div>
+    <div class="ob-icon" style="background:#EEEDFE"><i class="ti ti-bell" style="font-size:21px;color:#534AB7"></i></div>
+    <div class="ob-title">Alert preferences</div>
+    <div class="ob-sub">Choose when FraudGuard should notify you.</div>
+    <div style="margin-bottom:10px">
+      ${[
+        {icon:'ti-device-mobile',label:'Push notification',sub:'Instant alert on your phone',sel:true},
+        {icon:'ti-mail',label:'Email alert',sub:'Sent to levi@example.com',sel:true},
+        {icon:'ti-message',label:'SMS alert',sub:'Sent to +254 712 345 678',sel:false},
+      ].map(a=>`
+        <div class="check-row">
+          <div class="check-circle${a.sel?' done':''}">${a.sel?'<i class="ti ti-check" style="font-size:9px"></i>':''}</div>
+          <i class="ti ${a.icon}" style="font-size:14px;color:#64748b"></i>
+          <div><div style="font-size:12px;color:#0f172a">${a.label}</div><div style="font-size:10px;color:#64748b">${a.sub}</div></div>
+        </div>`).join('')}
+    </div>
+    <div style="font-size:11px;color:#64748b;margin-bottom:5px">Alert threshold</div>
+    <div class="tag-row">
+      ${['High risk only','Medium + High','All flags'].map((t,i)=>`<span class="tag${i===0?' sel':''}" onclick="document.querySelectorAll('.tag-row:last-of-type .tag').forEach(x=>x.classList.remove('sel'));this.classList.add('sel')">${t}</span>`).join('')}
+    </div>
+    <button class="ob-btn" onclick="go(1)">Save preferences</button>
+  `},
+  {render:()=>`
+    <div class="step-pill">${pips(4)}</div>
+    <div class="ob-icon" style="background:#E6F1FB"><i class="ti ti-circle-check" style="font-size:21px;color:#185FA5"></i></div>
+    <div class="ob-title">You're all set</div>
+    <div class="ob-sub">Here's a summary of your FraudGuard setup.</div>
+    <div style="margin-bottom:10px">
+      ${[
+        {label:'Profile',val:'Levi Omondi'},
+        {label:'Trusted merchants',val:'5 saved'},
+        {label:'Alerts',val:'Push + Email'},
+        {label:'Alert threshold',val:'High risk only'},
+        {label:'Model',val:'XGBoost · threshold 50%'},
+      ].map(r=>`
+        <div class="check-row">
+          <div class="check-circle done"><i class="ti ti-check" style="font-size:9px"></i></div>
+          <div style="flex:1;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:12px;color:#64748b">${r.label}</span>
+            <span style="font-size:12px;font-weight:500;color:#0f172a">${r.val}</span>
+          </div>
+        </div>`).join('')}
+    </div>
+    <button class="ob-btn" onclick="window.parent.postMessage({type:'onboarding_complete'},'*')">Go to dashboard</button>
+  `}
+];
+let cur=0;
+function pips(active){return STEPS.map((_,i)=>`<div class="step-pip${i<active?' done':i===active?' active':''}"></div>`).join('')}
+function render(){
+  document.getElementById('phone-body').innerHTML=STEPS[cur].render();
+  document.getElementById('nav-label').textContent=`Step ${cur+1} of ${STEPS.length}`;
+  document.getElementById('prev-b').disabled=cur===0;
+  document.getElementById('next-b').disabled=cur===STEPS.length-1;
+}
+function go(d){cur=Math.max(0,Math.min(STEPS.length-1,cur+d));render()}
+render();
+</script>
+</body>
+</html>
+"""
+
+# ─────────────────────────────────────────
 # LOAD MODEL ARTIFACTS
 # ─────────────────────────────────────────
 @st.cache_resource
@@ -111,10 +277,10 @@ def load_artifacts():
 
 try:
     model, encoders, feature_names, threshold = load_artifacts()
+    model_loaded = True
 except Exception as e:
-    st.error(f"Could not load model files: {e}")
-    st.info("Make sure fraud_model.pkl, label_encoders.pkl, feature_names.pkl and threshold.pkl are in the same folder as app.py")
-    st.stop()
+    model_loaded = False
+    model_error  = str(e)
 
 # ─────────────────────────────────────────
 # MAPPINGS
@@ -137,22 +303,46 @@ MERCHANTS = {
     "Nairobi Cinema":       ("entertainment", "fraud_Crona and Sons"),
 }
 
-# ─────────────────────────────────────────
-# DEFAULTS for all hidden fields
-# ─────────────────────────────────────────
-DEFAULT_AGE        = 35
-DEFAULT_GENDER     = "M"
-DEFAULT_CITY       = "Columbia"
-DEFAULT_STATE      = "NY"
-DEFAULT_DISTANCE   = 5.0
+DEFAULT_AGE      = 35
+DEFAULT_GENDER   = "M"
+DEFAULT_CITY     = "Columbia"
+DEFAULT_STATE    = "NY"
+DEFAULT_DISTANCE = 5.0
 
 # ─────────────────────────────────────────
 # SESSION STATE
 # ─────────────────────────────────────────
+if 'onboarded' not in st.session_state:
+    st.session_state.onboarded = False
 if 'history' not in st.session_state:
     st.session_state.history = []
 if 'result' not in st.session_state:
     st.session_state.result = None
+
+# ─────────────────────────────────────────
+# ONBOARDING SCREEN
+# ─────────────────────────────────────────
+if not st.session_state.onboarded:
+    components.html(ONBOARDING_HTML, height=620, scrolling=False)
+
+    col_skip, col_done = st.columns([3, 1])
+    with col_skip:
+        if st.button("Skip onboarding", use_container_width=True):
+            st.session_state.onboarded = True
+            st.rerun()
+    with col_done:
+        if st.button("Done ✓", use_container_width=True):
+            st.session_state.onboarded = True
+            st.rerun()
+    st.stop()
+
+# ─────────────────────────────────────────
+# MAIN APP (shown after onboarding)
+# ─────────────────────────────────────────
+if not model_loaded:
+    st.error(f"Could not load model files: {model_error}")
+    st.info("Make sure fraud_model.pkl, label_encoders.pkl, feature_names.pkl and threshold.pkl are in the same folder as app.py")
+    st.stop()
 
 # ─────────────────────────────────────────
 # FRAUD CHECK
@@ -185,6 +375,7 @@ def run_fraud_check(merchant, amount_kes, hour_override=None):
     is_fraud = prob >= threshold
     return prob, is_fraud, cat_raw, use_hour
 
+
 def fraud_reasons(merchant, amount_kes, hour):
     reasons = []
     cat = MERCHANTS[merchant][0]
@@ -194,9 +385,7 @@ def fraud_reasons(merchant, amount_kes, hour):
         reasons.append("High-risk online merchant category")
     return reasons
 
-# ─────────────────────────────────────────
-# RISK BAR
-# ─────────────────────────────────────────
+
 def render_risk_bar(prob):
     pct   = int(prob * 100)
     color = "#16a34a" if prob < 0.4 else "#f59e0b" if prob < threshold else "#dc2626"
@@ -213,6 +402,7 @@ def render_risk_bar(prob):
             <span>100%</span>
         </div>
     """, unsafe_allow_html=True)
+
 
 # ─────────────────────────────────────────
 # HEADER
@@ -281,7 +471,6 @@ with tab_check:
         col1, col2 = st.columns(2)
         with col1:
             merchant = st.selectbox("Merchant", list(MERCHANTS))
-
         with col2:
             amount = st.number_input(
                 "Amount (KES)", min_value=1.0,
